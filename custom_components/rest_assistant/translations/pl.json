@@ -5,9 +5,9 @@
       "user": {"title": "Wybierz typ encji", "data": {"entity_type": "Typ encji"}},
       "request": {"title": "Skonfiguruj żądanie REST", "data": {"resource": "Adres endpointu", "method": "Metoda", "payload": "Treść żądania POST", "timeout": "Limit czasu (sekundy)", "authentication": "Uwierzytelnianie", "username": "Nazwa użytkownika", "password": "Hasło", "scan_interval": "Interwał odpytywania (sekundy)"}},
       "request_details": {"title": "Szczegóły żądania", "data": {"payload": "Treść żądania POST", "username": "Nazwa użytkownika", "password": "Hasło"}},
-      "entity": {"title": "Skonfiguruj encję", "data": {"name": "Nazwa", "value_template": "Szablon wartości", "unit_of_measurement": "Jednostka", "device_class": "Klasa urządzenia", "icon": "Ikona", "payload_on": "Wartość stanu włączonego", "payload_off": "Wartość stanu wyłączonego"}}
+      "entity": {"title": "Skonfiguruj encję", "description": "Kliknij Zatwierdź, aby zobaczyć wynik szablonu dla odpowiedzi endpointu. Jeśli wynik jest poprawny, kliknij Zatwierdź ponownie bez zmiany szablonu, aby utworzyć encję. Zmień szablon i kliknij Zatwierdź, aby odświeżyć podgląd.", "data": {"name": "Nazwa", "value_template": "Szablon wartości", "template_preview": "Wynik szablonu", "unit_of_measurement": "Jednostka", "device_class": "Klasa urządzenia", "icon": "Ikona", "payload_on": "Wartość stanu włączonego", "payload_off": "Wartość stanu wyłączonego"}}
     },
-    "error": {"invalid_url": "Podaj prawidłowy adres HTTP lub HTTPS.", "payload_required": "Żądanie POST wymaga treści."},
+    "error": {"invalid_url": "Podaj prawidłowy adres HTTP lub HTTPS.", "payload_required": "Żądanie POST wymaga treści.", "cannot_connect": "Nie udało się połączyć z endpointem. Sprawdź adres, dostępność serwera i ustawienia uwierzytelniania.", "template_error": "Nie udało się wyrenderować szablonu dla odpowiedzi endpointu."},
     "abort": {"already_configured": "Ten endpoint jest już skonfigurowany."}
   },
   "options": {"step": {"init": {"title": "Interwał odpytywania", "data": {"scan_interval": "Interwał odpytywania (sekundy)"}}}}

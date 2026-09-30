@@ -10,6 +10,7 @@ repozytorium.
 | Encja liczbowego/tekstowego sensora | `custom_components/rest_assistant/sensor.py` | `tests/test_sensor.py` |
 | Binary sensor i mapowanie stanów | `custom_components/rest_assistant/binary_sensor.py` | `tests/test_sensor.py` |
 | Flow i widok w rzeczywistym HA | `tests/e2e/ha-rest.e2e.spec.mjs`, `playwright.ha.config.mjs` | Playwright uruchamia odizolowany kontener HA |
+| Ręczne testy UI w HA | `docs/local-home-assistant.md`, `.ha-dev/config/` | Stały kontener demo na `localhost:8124` |
 | Jakość i CI | `.github/workflows/ci.yml`, `requirements_*.txt`, `package*.json` | osobne joby Ruff, pytest, Playwright, Hassfest i HACS |
 
 ## Polecenia lokalne w WSL

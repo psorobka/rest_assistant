@@ -29,9 +29,11 @@
       },
       "entity": {
         "title": "Configure entity",
+        "description": "Click Submit to preview the template with the endpoint response. If the result is correct, click Submit again without changing the template to create the entity. Change the template and click Submit to refresh the preview.",
         "data": {
           "name": "Name",
           "value_template": "Value template",
+          "template_preview": "Template result",
           "unit_of_measurement": "Unit",
           "device_class": "Device class",
           "icon": "Icon",
@@ -42,7 +44,9 @@
     },
     "error": {
       "invalid_url": "Enter a valid HTTP or HTTPS URL.",
-      "payload_required": "A payload is required for POST requests."
+      "payload_required": "A payload is required for POST requests.",
+      "cannot_connect": "Could not connect to the endpoint. Check the URL, server availability, and authentication settings.",
+      "template_error": "The template could not be rendered with the endpoint response."
     },
     "abort": {"already_configured": "This endpoint is already configured."}
   },

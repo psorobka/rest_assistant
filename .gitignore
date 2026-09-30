@@ -8,5 +8,6 @@ playwright-report/
 .coverage
 coverage.xml
 .test-state/
+.ha-dev/
 __pycache__/
 *.py[cod]

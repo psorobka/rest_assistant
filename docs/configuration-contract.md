@@ -13,9 +13,15 @@ REST Home Assistant.
 4. Formularz encji zbiera `name` i `value_template`, a następnie pola platformy:
    - Sensor: `unit_of_measurement`, `device_class`, `icon`.
    - Binary Sensor: `device_class`, `payload_on`, `payload_off`.
+5. Pierwsze zatwierdzenie formularza renderuje szablon na odpowiedzi zapamiętanej
+   podczas sprawdzania endpointu. Wynik pojawia się w polu tylko do odczytu. Można
+   poprawić szablon i zatwierdzić formularz ponownie, aby odświeżyć wynik; kolejne
+   zatwierdzenie bez zmian zapisuje encję.
 
 `value_template` otrzymuje zmienne `value_json` i `value`. Odpowiedź HTTP jest
-interpretowana jako JSON, jeśli się parsuje; w przeciwnym razie jako tekst.
+interpretowana jako JSON, jeśli się parsuje; w przeciwnym razie jako tekst. Podgląd
+korzysta z jednorazowej odpowiedzi pobranej w kroku żądania, a nie z kolejnego
+odpytywania endpointu.
 
 ## Cykl życia i dane
 

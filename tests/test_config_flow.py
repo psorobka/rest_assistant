@@ -108,17 +108,118 @@ async def test_sensor_flow_creates_entry_after_endpoint_check(hass):
             },
         )
         assert result["step_id"] == "entity"
+        entity_input = {
+            "name": "Temperature",
+            "value_template": "{{ value_json.temperature }}",
+            "unit_of_measurement": "°C",
+            "icon": "mdi:thermometer",
+        }
         result = await hass.config_entries.flow.async_configure(
-            result["flow_id"],
-            {
-                "name": "Temperature",
-                "value_template": "{{ value_json.temperature }}",
-                "unit_of_measurement": "°C",
-                "icon": "mdi:thermometer",
-            },
+            result["flow_id"], entity_input
+        )
+        assert result["type"] is FlowResultType.FORM
+        preview_field = next(
+            marker
+            for marker in result["data_schema"].schema
+            if marker.schema == "template_preview"
+        )
+        assert result["data_schema"].schema[preview_field].config["read_only"] is True
+        assert result["data_schema"].schema[preview_field].config["multiline"] is True
+        assert preview_field.default() == "21.5"
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], entity_input
         )
         assert result["type"] is FlowResultType.CREATE_ENTRY
         assert result["result"].data["resource"] == endpoint
+
+
+async def test_binary_sensor_preview_uses_sample_payload(hass):
+    """The preview renders the sample using the binary sensor template context."""
+    endpoint = "http://rest-test.local/state"
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"entity_type": "binary_sensor"}
+    )
+    with aioresponses() as mocked:
+        mocked.get(endpoint, payload={"online": True}, repeat=True)
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {
+                "resource": endpoint,
+                "method": "GET",
+                "timeout": 10,
+                "authentication": "none",
+                "scan_interval": 60,
+            },
+        )
+        entity_input = {
+            "name": "Online",
+            "value_template": "{{ value_json.online }}",
+            "payload_on": "True",
+            "payload_off": "False",
+        }
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], entity_input
+        )
+        preview_field = next(
+            marker
+            for marker in result["data_schema"].schema
+            if marker.schema == "template_preview"
+        )
+        assert preview_field.default() == "True"
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], entity_input
+        )
+        assert result["type"] is FlowResultType.CREATE_ENTRY
+
+
+async def test_template_preview_refreshes_when_template_changes(hass):
+    """Changing the template recalculates the preview before creating the entry."""
+    endpoint = "http://rest-test.local/state"
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"entity_type": "sensor"}
+    )
+    with aioresponses() as mocked:
+        mocked.get(endpoint, payload={"temperature": 21.5}, repeat=True)
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {
+                "resource": endpoint,
+                "method": "GET",
+                "timeout": 10,
+                "authentication": "none",
+                "scan_interval": 60,
+            },
+        )
+        first_input = {
+            "name": "Temperature",
+            "value_template": "{{ value_json.temperature }}",
+        }
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], first_input
+        )
+        changed_input = {
+            **first_input,
+            "value_template": "{{ value_json.temperature | int + 1 }}",
+        }
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], changed_input
+        )
+        preview_field = next(
+            marker
+            for marker in result["data_schema"].schema
+            if marker.schema == "template_preview"
+        )
+        assert preview_field.default() == "22"
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], changed_input
+        )
+        assert result["type"] is FlowResultType.CREATE_ENTRY
 
 
 async def test_authentication_requires_credentials(hass):

@@ -18,8 +18,10 @@ from homeassistant.const import (
     CONF_TIMEOUT,
     CONF_USERNAME,
 )
+from homeassistant.exceptions import TemplateError
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.template import Template
 
 from .const import (
     CONF_AUTHENTICATION,
@@ -42,6 +44,9 @@ class RestAssistantConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         self._data: dict[str, Any] = {}
+        self._sample_value: Any = None
+        self._pending_entity_input: dict[str, Any] | None = None
+        self._template_preview: str | None = None
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
         """Choose entity type, then configure its request and state."""
@@ -89,7 +94,7 @@ class RestAssistantConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ):
                     return await self.async_step_request_details()
                 try:
-                    await self._validate_endpoint(self._data)
+                    self._sample_value = await self._validate_endpoint(self._data)
                 except (aiohttp.ClientError, TimeoutError, ValueError):
                     errors["base"] = "cannot_connect"
                 else:
@@ -137,7 +142,7 @@ class RestAssistantConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "credentials_required"
             else:
                 try:
-                    await self._validate_endpoint(self._data)
+                    self._sample_value = await self._validate_endpoint(self._data)
                 except (aiohttp.ClientError, TimeoutError, ValueError):
                     errors["base"] = "cannot_connect"
                 else:
@@ -146,8 +151,8 @@ class RestAssistantConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="request_details", data_schema=vol.Schema(schema), errors=errors
         )
 
-    async def _validate_endpoint(self, data: dict[str, Any]) -> None:
-        """Make a request to verify the endpoint and credentials."""
+    async def _validate_endpoint(self, data: dict[str, Any]) -> Any:
+        """Fetch a sample response to verify the endpoint and preview its template."""
         kwargs: dict[str, Any] = {
             "timeout": aiohttp.ClientTimeout(total=data[CONF_TIMEOUT])
         }
@@ -162,12 +167,41 @@ class RestAssistantConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         request = getattr(async_get_clientsession(self.hass), data[CONF_METHOD].lower())
         async with request(data[CONF_RESOURCE], **kwargs) as response:
             response.raise_for_status()
+            try:
+                return await response.json(content_type=None)
+            except (aiohttp.ContentTypeError, ValueError):
+                return await response.text()
+
+    async def _render_template_preview(self, user_input: dict[str, Any]) -> str:
+        """Render the entity template against the sample endpoint response."""
+        template = Template(user_input[CONF_VALUE_TEMPLATE], self.hass)
+        return template.async_render(
+            {"value_json": self._sample_value, "value": self._sample_value},
+            parse_result=False,
+        )
 
     async def async_step_entity(self, user_input: dict[str, Any] | None = None):
         """Configure selected entity platform."""
-        entity_type = self._data[CONF_ENTITY_TYPE]
         if user_input is not None:
-            self._data.update(user_input)
+            entity_input = {
+                key: value
+                for key, value in user_input.items()
+                if key != "template_preview"
+            }
+            if entity_input != self._pending_entity_input:
+                try:
+                    self._template_preview = await self._render_template_preview(
+                        entity_input
+                    )
+                except (TemplateError, ValueError, TypeError):
+                    self._pending_entity_input = None
+                    return await self._show_entity_form(
+                        entity_input, errors={CONF_VALUE_TEMPLATE: "template_error"}
+                    )
+                self._pending_entity_input = entity_input.copy()
+                return await self._show_entity_form(entity_input)
+
+            self._data.update(entity_input)
             unique_id = ":".join(
                 (
                     self._data[CONF_ENTITY_TYPE],
@@ -178,10 +212,28 @@ class RestAssistantConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             await self.async_set_unique_id(unique_id)
             self._abort_if_unique_id_configured()
             return self.async_create_entry(title=self._data[CONF_NAME], data=self._data)
+
+        return await self._show_entity_form()
+
+    async def _show_entity_form(
+        self,
+        user_input: dict[str, Any] | None = None,
+        errors: dict[str, str] | None = None,
+    ):
+        """Show entity fields and, after submission, the rendered template result."""
+        entity_type = self._data[CONF_ENTITY_TYPE]
         schema: dict[Any, Any] = {
             vol.Required(CONF_NAME): str,
-            vol.Optional(CONF_VALUE_TEMPLATE, default="{{ value_json }}"): str,
+            vol.Optional(
+                CONF_VALUE_TEMPLATE, default="{{ value_json }}"
+            ): selector.TextSelector(selector.TextSelectorConfig(multiline=True)),
         }
+        if self._template_preview is not None:
+            schema[vol.Optional("template_preview", default=self._template_preview)] = (
+                selector.TextSelector(
+                    selector.TextSelectorConfig(multiline=True, read_only=True)
+                )
+            )
         if entity_type == "sensor":
             schema.update(
                 {
@@ -202,7 +254,14 @@ class RestAssistantConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Optional(CONF_PAYLOAD_OFF, default="OFF"): str,
                 }
             )
-        return self.async_show_form(step_id="entity", data_schema=vol.Schema(schema))
+        data_schema = vol.Schema(schema)
+        if user_input is not None:
+            data_schema = self.add_suggested_values_to_schema(data_schema, user_input)
+        return self.async_show_form(
+            step_id="entity",
+            data_schema=data_schema,
+            errors=errors,
+        )
 
 
 def _device_class_selector(device_classes):

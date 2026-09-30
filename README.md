@@ -32,6 +32,9 @@ For manual installation, copy `custom_components/rest_assistant` into the
 `custom_components` directory of the Home Assistant configuration, then restart
 Home Assistant.
 
+For a local UI demo with the built-in fake entities and localhost-only login
+bypass, see [local Home Assistant](docs/local-home-assistant.md).
+
 ## Development and verification in WSL
 
 Use Python 3.13 or later, Node.js 22, Docker, and Chromium in WSL:

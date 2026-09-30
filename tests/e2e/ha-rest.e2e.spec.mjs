@@ -24,6 +24,10 @@ async function post(route, body = {}) {
   return result;
 }
 
+function schemaDefault(flow, name) {
+  return flow.data_schema.find((field) => field.name === name)?.default;
+}
+
 async function waitForHA() {
   const deadline = Date.now() + 180_000;
   while (Date.now() < deadline) {
@@ -44,7 +48,10 @@ test.beforeAll(async () => {
   test.setTimeout(360_000);
   configPath = await mkdtemp(path.join(tmpdir(), "rest-assistant-ha-e2e-"));
   await mkdir(path.join(configPath, "www"));
-  await writeFile(path.join(configPath, "www", "status.json"), '{"status":"ready"}');
+  await writeFile(
+    path.join(configPath, "www", "status.json"),
+    '{"status":"ready","temperature":21.5,"online":true}',
+  );
   await writeFile(path.join(configPath, "configuration.yaml"), `
 default_config:
 homeassistant:
@@ -107,7 +114,7 @@ test.afterAll(async () => {
   }
 });
 
-test("REST sensor and binary sensor appear in Home Assistant UI", async ({ page }) => {
+test("REST sensors and rendered template previews work in Home Assistant", async ({ page }) => {
   test.setTimeout(360_000);
   let flow = await post("api/config/config_entries/flow", { handler: "rest_assistant" });
   flow = await post(`api/config/config_entries/flow/${flow.flow_id}`, {
@@ -124,11 +131,22 @@ test("REST sensor and binary sensor appear in Home Assistant UI", async ({ page 
   expect(flow.step_id).toBe("entity");
 
   // Use HA's own in-process endpoint as deterministic response source for the UI smoke check.
-  flow = await post(`api/config/config_entries/flow/${flow.flow_id}`, {
+  const sensorInput = {
     name: "Example status",
     value_template: "{{ value_json.status }}",
     icon: "mdi:api",
-  });
+  };
+  flow = await post(`api/config/config_entries/flow/${flow.flow_id}`, sensorInput);
+  expect(flow.type).toBe("form");
+  expect(schemaDefault(flow, "template_preview")).toBe("ready");
+  const updatedSensorInput = {
+    ...sensorInput,
+    value_template: "{{ value_json.temperature }}",
+  };
+  flow = await post(`api/config/config_entries/flow/${flow.flow_id}`, updatedSensorInput);
+  expect(flow.type).toBe("form");
+  expect(schemaDefault(flow, "template_preview")).toBe("21.5");
+  flow = await post(`api/config/config_entries/flow/${flow.flow_id}`, updatedSensorInput);
   expect(flow.type).toBe("create_entry");
 
   const statesResponse = await fetch(`${baseUrl}/api/states`, {
@@ -136,7 +154,7 @@ test("REST sensor and binary sensor appear in Home Assistant UI", async ({ page 
   });
   const states = await statesResponse.json();
   expect(states.find((state) => state.entity_id === "sensor.example_status")?.state).toBe(
-    "ready",
+    "21.5",
   );
 
   let binaryFlow = await post("api/config/config_entries/flow", {
@@ -156,15 +174,22 @@ test("REST sensor and binary sensor appear in Home Assistant UI", async ({ page 
       scan_interval: 60,
     },
     );
+  const binaryInput = {
+    name: "Endpoint available",
+    value_template: "{{ value_json.status }}",
+    device_class: "connectivity",
+    payload_on: "ready",
+    payload_off: "offline",
+  };
   binaryFlow = await post(
     `api/config/config_entries/flow/${binaryFlow.flow_id}`,
-    {
-      name: "Endpoint available",
-      value_template: "{{ value_json.status }}",
-      device_class: "connectivity",
-      payload_on: "ready",
-      payload_off: "offline",
-    },
+    binaryInput,
+  );
+  expect(binaryFlow.type).toBe("form");
+  expect(schemaDefault(binaryFlow, "template_preview")).toBe("ready");
+  binaryFlow = await post(
+    `api/config/config_entries/flow/${binaryFlow.flow_id}`,
+    binaryInput,
   );
   expect(binaryFlow.type).toBe("create_entry");
   const binaryStatesResponse = await fetch(`${baseUrl}/api/states`, {
