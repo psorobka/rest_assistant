@@ -3,6 +3,17 @@
 Użyj tabeli, by przejść od zgłoszenia do właściwego kodu i testu bez czytania całego
 repozytorium.
 
+## Wymagany workflow GitHub
+
+- Każdą zmianę przygotowuj na osobnym branchu; nie commituj ani nie wypychaj pracy
+  bezpośrednio na `main`. Używaj nazw w formacie `codex/<krótki-opis>`.
+- Zmiany dostarczaj przez Pull Request do `main`.
+- Przed scaleniem wszystkie wymagane joby GitHub Actions muszą zakończyć się na
+  zielono. Jeśli job zawiedzie, popraw przyczynę i poczekaj na zielone ponowne
+  uruchomienie.
+- Nie uznawaj zmiany za zakończoną ani nie scalaj PR, dopóki wymagane GitHub Actions
+  nie przejdą.
+
 | Obszar | Kod i zasoby | Testy |
 | --- | --- | --- |
 | Config flow, walidacja URL, credentials, metody | `custom_components/rest_assistant/config_flow.py`, `strings.json`, `translations/*.json` | `tests/test_config_flow.py`, `tests/test_translations.py` |
