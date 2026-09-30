@@ -13,6 +13,15 @@
 - Wdrażaj najmniejszą kompletną zmianę. Nie przenoś ustawień spoza uzgodnionego
   zakresu bez wyraźnej potrzeby.
 
+## Wymagany workflow GitHub
+
+- Każdą zmianę rób na osobnym branchu `codex/<krótki-opis>`; nigdy nie commituj
+  ani nie wypychaj bezpośrednio na `main`.
+- Dostarczaj zmiany jako Pull Request do `main`.
+- Przed scaleniem wymagane joby GitHub Actions muszą być zielone. Naprawiaj
+  nieudane joby i czekaj na zielone ponowne uruchomienie; nie kończ pracy ani nie
+  scalaj PR, dopóki wymagane kontrole nie przejdą.
+
 ## Kontrakty integracji
 
 - `config_flow.py` zapisuje jeden wpis i jedną encję na wpis. Pierwszy krok wybiera
