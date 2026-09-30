@@ -1,0 +1,14 @@
+{
+  "title": "REST Assistant",
+  "config": {
+    "step": {
+      "user": {"title": "Choose sensor type", "data": {"entity_type": "Entity type"}},
+      "request": {"title": "Configure REST request", "data": {"resource": "Endpoint URL", "method": "Method", "payload": "POST payload", "timeout": "Timeout (seconds)", "authentication": "Authentication", "username": "Username", "password": "Password", "scan_interval": "Polling interval (seconds)"}},
+      "request_details": {"title": "Request details", "data": {"payload": "POST payload", "username": "Username", "password": "Password"}},
+      "entity": {"title": "Configure entity", "data": {"name": "Name", "value_template": "Value template", "unit_of_measurement": "Unit", "device_class": "Device class", "icon": "Icon", "payload_on": "Value for on", "payload_off": "Value for off"}}
+    },
+    "error": {"invalid_url": "Enter a valid HTTP or HTTPS URL.", "payload_required": "A payload is required for POST requests."},
+    "abort": {"already_configured": "This endpoint is already configured."}
+  },
+  "options": {"step": {"init": {"title": "Polling interval", "data": {"scan_interval": "Polling interval (seconds)"}}}}
+}

@@ -1,0 +1,12 @@
+.venv/
+venv/
+node_modules/
+test-results/
+playwright-report/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+.test-state/
+__pycache__/
+*.py[cod]

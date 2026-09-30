@@ -1,0 +1,7 @@
+{
+  "name": "rest-assistant-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {"test:ha": "playwright test --config playwright.ha.config.mjs"},
+  "devDependencies": {"@playwright/test": "^1.55.0"}
+}

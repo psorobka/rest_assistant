@@ -1,0 +1,14 @@
+{
+  "title": "REST Assistant",
+  "config": {
+    "step": {
+      "user": {"title": "Wybierz typ encji", "data": {"entity_type": "Typ encji"}},
+      "request": {"title": "Skonfiguruj żądanie REST", "data": {"resource": "Adres endpointu", "method": "Metoda", "payload": "Treść żądania POST", "timeout": "Limit czasu (sekundy)", "authentication": "Uwierzytelnianie", "username": "Nazwa użytkownika", "password": "Hasło", "scan_interval": "Interwał odpytywania (sekundy)"}},
+      "request_details": {"title": "Szczegóły żądania", "data": {"payload": "Treść żądania POST", "username": "Nazwa użytkownika", "password": "Hasło"}},
+      "entity": {"title": "Skonfiguruj encję", "data": {"name": "Nazwa", "value_template": "Szablon wartości", "unit_of_measurement": "Jednostka", "device_class": "Klasa urządzenia", "icon": "Ikona", "payload_on": "Wartość stanu włączonego", "payload_off": "Wartość stanu wyłączonego"}}
+    },
+    "error": {"invalid_url": "Podaj prawidłowy adres HTTP lub HTTPS.", "payload_required": "Żądanie POST wymaga treści."},
+    "abort": {"already_configured": "Ten endpoint jest już skonfigurowany."}
+  },
+  "options": {"step": {"init": {"title": "Interwał odpytywania", "data": {"scan_interval": "Interwał odpytywania (sekundy)"}}}}
+}
